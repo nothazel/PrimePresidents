@@ -1,3 +1,5 @@
+## V1.2.1
+- Forked the project and fixed the mod not working on ultrakill's ultra-revamp update, removed UMM dependancy, uses BepInEx 
 ## V1.1.0
 - Former president barrack obama finds himself in hell (replaces gabriel 1)
 - Obamanopticon textures fixed
