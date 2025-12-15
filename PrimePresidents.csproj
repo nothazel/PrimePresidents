@@ -1,43 +1,45 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>PrimePresidents</AssemblyName>
-    <Description>Adds the presidents to ultrakill</Description>
-    <Version>1.1.0</Version>
+    <RootNamespace>PrimePresidents</RootNamespace>
+    <Description>Replaces the prime fights (+Gabriel) with current and former U.S. presidents, Fixed for Ultra-Revamp update!</Description>
+    <Version>1.2.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <ULTRAKILLDir>D:\SteamLibrary\steamapps\common\ULTRAKILL</ULTRAKILLDir>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <Content Remove="Resources\primepresidents" />
   </ItemGroup>
+  
   <ItemGroup>
     <EmbeddedResource Include="Resources\primepresidents" />
   </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
     <PackageReference Include="UnityEngine.Modules" Version="2019.4.16" IncludeAssets="compile" />
-    <Reference Include="UMM">
-      <HintPath>$(ULTRAKILLDir)\BepInEx\plugins\UMM\UMM.dll</HintPath>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="UnityEngine">
+      <HintPath>$(ULTRAKILLDir)\ULTRAKILL_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-        <HintPath>$(ULTRAKILLDir)\ULTRAKILL_Data\Managed\UnityEngine.dll</HintPath>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ULTRAKILLDir)\ULTRAKILL_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-        <HintPath>$(ULTRAKILLDir)\ULTRAKILL_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>$(ULTRAKILLDir)\ULTRAKILL_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-        <HintPath>$(ULTRAKILLDir)\ULTRAKILL_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AssetBundleModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-        <HintPath>$(ULTRAKILLDir)\ULTRAKILL_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>$(ULTRAKILLDir)\ULTRAKILL_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
-        <HintPath>$(ULTRAKILLDir)\ULTRAKILL_Data\Managed\Assembly-CSharp.dll</HintPath>
-        </Reference>
+      <HintPath>$(ULTRAKILLDir)\ULTRAKILL_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>
