@@ -1,10 +1,9 @@
 {
     "name": "PrimePresidents",
-    "version_number": "1.1.0",
-    "website_url": "https://github.com/armedturret/PrimePresidents",
-    "description": "Replaces the prime fights (+Gabriel) with current and former U.S. presidents.",
+    "version_number": "1.2.1",
+    "website_url": "https://github.com/nothazel/PrimePresidents",
+    "description": "Replaces the prime fights (+Gabriel) with current and former U.S. presidents, Fixed for Ultra-Revamp update!",
     "dependencies": [
-        "BepInEx-BepInExPack-5.4.2100",
-		"	Temperz87-UltraModManager-5.6.0"
+        "BepInEx-BepInExPack-5.4.2304"
     ]
 }
