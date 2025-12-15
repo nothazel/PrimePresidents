@@ -1,4 +1,4 @@
-﻿using UMM;
+using BepInEx;
 using UnityEngine;
 using HarmonyLib;
 using System.IO;
@@ -6,42 +6,62 @@ using System;
 using System.Reflection;
 using System.Collections.Generic;
 
-// TODO:
-// Replace gab/pano texture
-// Fix FP texture not applying
-
 namespace PrimePresidents
 {
-    [UKPlugin("gov.PrimePresidents","Prime Presidents", "1.1.0", "Replaces the prime fights (+Gabriel) with current and former U.S. presidents.\nOriginal concept by: https://www.youtube.com/@spunklord5000", true, false)]
-    public class Presidents : UKMod
+    [BepInPlugin("gov.PrimePresidents", "Prime Presidents", "1.2.1")]
+    [BepInProcess("ULTRAKILL.exe")]
+    public class Presidents : BaseUnityPlugin
     {
         private static Harmony harmony;
-
         internal static AssetBundle PresidentsAssetBundle;
 
-        public override void OnModLoaded()
+        private void Awake()
         {
-            Debug.Log("Prime presidents starting");
+            Logger.LogInfo("Prime presidents starting");
 
-            //load the asset bundle
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "PrimePresidents.Resources.primepresidents";
-            using (Stream stream = assembly.GetManifestResourceStream(resourceName)){
-                PresidentsAssetBundle =  AssetBundle.LoadFromStream(stream);
+            try
+            {
+                //load the asset bundle
+                Logger.LogInfo("Loading asset bundle...");
+                var assembly = Assembly.GetExecutingAssembly();
+                var resourceName = "PrimePresidents.Resources.primepresidents";
+                using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+                {
+                    if (stream == null)
+                    {
+                        Logger.LogError("Could not find embedded asset bundle!");
+                        return;
+                    }
+                    PresidentsAssetBundle = AssetBundle.LoadFromStream(stream);
+                }
+
+                if (PresidentsAssetBundle == null)
+                {
+                    Logger.LogError("Failed to load asset bundle!");
+                    return;
+                }
+                Logger.LogInfo("Asset bundle loaded successfully!");
+
+                //start harmonylib to swap assets
+                Logger.LogInfo("Starting Harmony patches...");
+                harmony = new Harmony("gov.PrimePresidents");
+                harmony.PatchAll();
+                Logger.LogInfo("Harmony patches applied successfully!");
+
+                Logger.LogInfo("Prime Presidents loaded successfully!");
             }
-
-            //start harmonylib to swap assets
-            harmony = new Harmony("gov.PrimePresidents");
-            harmony.PatchAll();
+            catch (Exception ex)
+            {
+                Logger.LogError($"Fatal error during initialization: {ex}");
+                throw;
+            }
         }
 
-        public override void OnModUnload()
+        private void OnDestroy()
+        {}
+
+        private static SubtitledAudioSource.SubtitleDataLine MakeLine(string subtitle, float time)
         {
-            harmony.UnpatchSelf();
-            base.OnModUnload();
-        }
-
-        private static SubtitledAudioSource.SubtitleDataLine MakeLine(string subtitle, float time){
             var sub = new SubtitledAudioSource.SubtitleDataLine();
             sub.subtitle = subtitle;
             sub.time = time;
@@ -52,7 +72,8 @@ namespace PrimePresidents
         [HarmonyPatch(typeof(MinosPrime), "Start")]
         internal class Patch01
         {
-            static void Postfix(MinosPrime __instance){
+            static void Postfix(MinosPrime __instance)
+            {
                 Debug.Log("Replacing minos voice lines");
 
                 //set judgement to biden blast
@@ -95,10 +116,11 @@ namespace PrimePresidents
         }
 
         //replace captions for minos attacks
-        [HarmonyPatch(typeof(SubtitleController), nameof(SubtitleController.DisplaySubtitle), new Type[]{typeof(string), typeof(AudioSource)})]
+        [HarmonyPatch(typeof(SubtitleController), nameof(SubtitleController.DisplaySubtitle), new Type[]{typeof(string), typeof(AudioSource), typeof(bool)})]
         internal class Patch02
         {
-            static void Prefix(ref string caption, AudioSource audioSource){
+            static void Prefix(ref string caption, AudioSource audioSource, bool ignoreSetting)
+            {
                 //change caption
                 if(caption == "Thy end is now!")
                 {
@@ -155,7 +177,6 @@ namespace PrimePresidents
             }
         }
 
-
         //use map info to inject data
         [HarmonyPatch(typeof(StockMapInfo), "Awake")]
         internal class Patch03
@@ -165,7 +186,8 @@ namespace PrimePresidents
                 //try to find dialog in scene and replace it
                 foreach(var source in Resources.FindObjectsOfTypeAll<AudioSource>())
                 {
-                    if(source.clip){
+                    if(source.clip)
+                    {
                         bool replaced = false;
                         var subtitles = new List<SubtitledAudioSource.SubtitleDataLine>();
                         if(source.clip.GetName() == "mp_intro2")
@@ -377,10 +399,14 @@ namespace PrimePresidents
                         }
 
                         //update subtitles if needed
-                        if(replaced){
+                        if(replaced)
+                        {
                             var subsource = source.GetComponent<SubtitledAudioSource>();
-                            Traverse field = Traverse.Create(subsource).Field("subtitles");
-                            (field.GetValue() as SubtitledAudioSource.SubtitleData).lines = subtitles.ToArray();
+                            if (subsource != null)
+                            {
+                                Traverse field = Traverse.Create(subsource).Field("subtitles");
+                                (field.GetValue() as SubtitledAudioSource.SubtitleData).lines = subtitles.ToArray();
+                            }
                         }
                     }
                 }
@@ -410,16 +436,20 @@ namespace PrimePresidents
         {
             static void Prefix(BossHealthBar __instance)
             {
-                if(__instance.bossName == "MINOS PRIME"){
+                if(__instance.bossName == "MINOS PRIME")
+                {
                     __instance.bossName = "BIDEN PRIME";
                 }
-                if(__instance.bossName == "SISYPHUS PRIME"){
+                if(__instance.bossName == "SISYPHUS PRIME")
+                {
                     __instance.bossName = "TRUMP PRIME";
                 }
-                if(__instance.bossName == "FLESH PANOPTICON"){
+                if(__instance.bossName == "FLESH PANOPTICON")
+                {
                     __instance.bossName = "OBAMANOPTICON";
                 }
-                if(__instance.bossName == "GABRIEL, JUDGE OF HELL"){
+                if(__instance.bossName == "GABRIEL, JUDGE OF HELL")
+                {
                     __instance.bossName = "OBAMA, JUDGE OF DC";
                 }
             }
@@ -433,19 +463,23 @@ namespace PrimePresidents
             static void Postfix(LevelNamePopup __instance)
             {
                 Traverse field = Traverse.Create(__instance).Field("nameString");
-                if(field.GetValue() as string == "SOUL SURVIVOR"){
+                if(field.GetValue() as string == "SOUL SURVIVOR")
+                {
                     field.SetValue("CHIEF OF STATE");
                 }
-                if(field.GetValue() as string == "WAIT OF THE WORLD"){
+                if(field.GetValue() as string == "WAIT OF THE WORLD")
+                {
                     field.SetValue("SIN OF THE APPRENTICE");
                 }
-                if(field.GetValue() as string == "IN THE FLESH"){
+                if(field.GetValue() as string == "IN THE FLESH")
+                {
                     field.SetValue("INAUGURAL ADDRESS");
                 }
 
                 //replace layer string as well
                 field = Traverse.Create(__instance).Field("layerString");
-                if(field.GetValue() as string == "GLUTTONY /// ACT I CLIMAX"){
+                if(field.GetValue() as string == "GLUTTONY /// ACT I CLIMAX")
+                {
                     field.SetValue("FEDERAL RESERVE /// ACT I CLIMAX");
                 }
             }
@@ -455,9 +489,11 @@ namespace PrimePresidents
         [HarmonyPatch(typeof(FleshPrison), "Start")]
         internal class Patch06
         {
-            static void Postfix(FleshPrison __instance){
+            static void Postfix(FleshPrison __instance)
+            {
                 //only replace texture for alt version
-                if(__instance.altVersion){
+                if(__instance.altVersion)
+                {
                     Debug.Log("Swapping in obama");
 
                     var head = __instance.transform.Find("FleshPrison2").Find("FleshPrison2_Head");
@@ -473,16 +509,22 @@ namespace PrimePresidents
         [HarmonyPatch(typeof(SisyphusPrime), "Start")]
         internal class Patch07
         {
-            static void Postfix(SisyphusPrime __instance){
+            static void Postfix(SisyphusPrime __instance)
+            {
                 var head = __instance.transform.Find("Sisyphus (1)").Find("Sisyphus_Head");
                 var beard = __instance.transform.Find("Sisyphus (1)").Find("Sisyphus_Hair");
                 var hair = __instance.transform.Find("Sisyphus (1)").Find("Sisyphus_Beard");
+                
                 //replace swap options
                 var cm = head.GetComponent<ChangeMaterials>();
-                for(int i = 0; i < cm.materials.Length; i++){
-                    var newMatCm = new Material(cm.materials[i]);
-                    newMatCm.mainTexture = PresidentsAssetBundle.LoadAsset<Texture2D>("TrumpHead.png");
-                    cm.materials[i] = newMatCm;
+                if (cm != null)
+                {
+                    for(int i = 0; i < cm.materials.Length; i++)
+                    {
+                        var newMatCm = new Material(cm.materials[i]);
+                        newMatCm.mainTexture = PresidentsAssetBundle.LoadAsset<Texture2D>("TrumpHead.png");
+                        cm.materials[i] = newMatCm;
+                    }
                 }
 
                 //replace active
@@ -492,8 +534,8 @@ namespace PrimePresidents
                 renderer.sharedMaterial = newMat;
 
                 //disable the hair and beard display on phase change
-                Destroy(hair.gameObject);
-                Destroy(beard.gameObject);
+                if (hair != null) UnityEngine.Object.Destroy(hair.gameObject);
+                if (beard != null) UnityEngine.Object.Destroy(beard.gameObject);
                 
                 //replace the voice lines
                 //Be gone
@@ -546,6 +588,7 @@ namespace PrimePresidents
                     string[] taunts = new string[12];
                     __instance.tauntSecondPhase = new AudioClip[12];
                     string[] tauntsSecondPhase = new string[12];
+                    
                     for(int i = 0; i < 12; i++)
                     {
                         __instance.taunt[i] = PresidentsAssetBundle.LoadAsset<AudioClip>(String.Format("obama1_taunt{0}.mp3", i + 1));
@@ -599,7 +642,7 @@ namespace PrimePresidents
                     tauntSecondSubs.SetValue(tauntsSecondPhase);
 
                     //load hurt noises
-                    __instance.hurt  = new AudioClip[3];
+                    __instance.hurt = new AudioClip[3];
                     __instance.hurt[0] = PresidentsAssetBundle.LoadAsset<AudioClip>("obama1_hurt1.mp3");
                     __instance.hurt[1] = PresidentsAssetBundle.LoadAsset<AudioClip>("obama1_hurt2.mp3");
                     __instance.hurt[2] = PresidentsAssetBundle.LoadAsset<AudioClip>("obama1_hurt3.mp3");
